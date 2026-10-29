@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Casa limpia · Misiones</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f7de1">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#f2f4f8;--cd:#fff;--tx:#1b2230;--mu:#667086;--ac:#2f7de1;--ok:#2fa866;--gd:#b87d00;--rm:#e8ecf3;--wr:#d64545;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13161c;--cd:#1e232d;--tx:#eef1f6;--mu:#9aa4b8;--ac:#5aa0ff;--ok:#43c081;--gd:#ffc83d;--rm:#2b3240;--wr:#ff7a7a}}
+:root[data-theme="dark"]{--bg:#13161c;--cd:#1e232d;--tx:#eef1f6;--mu:#9aa4b8;--ac:#5aa0ff;--ok:#43c081;--gd:#ffc83d;--rm:#2b3240;--wr:#ff7a7a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;max-width:560px;margin:auto}
+main{max-width:560px;margin:auto;padding:0 12px 24px}
+.card{background:var(--cd);border-radius:14px;padding:12px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.money{font-size:22px;font-weight:800;color:var(--gd)}.money small{font-size:13px;color:var(--mu)}
+.bar{height:12px;border-radius:6px;background:var(--rm);overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ok))}
+.meta{color:var(--mu);font-size:13px}
+.warn{background:#fff3cd;color:#5c4400}
+nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}
+nav button{flex:none;border:0;border-radius:20px;padding:8px 14px;background:var(--cd);color:var(--tx);font-size:14px;cursor:pointer}
+nav button.on{background:var(--ac);color:#fff}
+button.r,button.b{border:1px solid var(--mu);background:none;color:var(--tx);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px}
+button.b{background:var(--ac);border-color:var(--ac);color:#fff;padding:10px 14px;font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--mu);background:var(--bg);color:var(--tx);font-size:15px;margin:4px 0}
+.map{position:relative;border-radius:14px;overflow:hidden;margin-bottom:10px;background:#d8c65a}
+.map img,.map svg{display:block;width:100%;height:auto}.map svg{position:absolute;inset:0}
+.rm{stroke:#fff;stroke-width:4;cursor:pointer}.rm.z{fill:rgba(120,120,120,.12)}.rm.pd{fill:rgba(47,125,225,.32)}.rm.ok{fill:rgba(47,168,102,.45)}.rm.sel{stroke:#e0231b;stroke-width:8}
+.bd{fill:#fff;font-size:54px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}.bc{fill:#1b2230;pointer-events:none}
+h2{margin:0 0 6px;font-size:18px}.sec{font-weight:700;margin:10px 0 4px;color:var(--mu);font-size:13px}
+.task{display:flex;align-items:center;gap:10px;width:100%;padding:11px;margin-bottom:6px;border:0;border-radius:10px;background:var(--rm);color:var(--tx);font-size:15px;text-align:left;cursor:pointer}
+.task .c{width:22px;height:22px;border:2px solid var(--mu);border-radius:6px;display:grid;place-items:center;flex:none}
+.task.dn{opacity:.6;text-decoration:line-through}.task.dn .c{background:var(--ok);border-color:var(--ok);color:#fff}
+.task .p{margin-left:auto;font-weight:700;color:var(--gd);white-space:nowrap}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--rm)}
+.msg{padding:8px 10px;border-radius:10px;margin:6px 0;background:var(--rm);max-width:88%}.msg.a{background:var(--ac);color:#fff}.msg.u{margin-left:auto}.msg.s{background:transparent;color:var(--mu);font-size:13px;max-width:100%}
+.msg small{display:block;opacity:.7;font-size:11px}
+.empty{text-align:center;color:var(--mu);padding:18px}
+.big{text-align:center;padding:30px 14px}.big button{display:block;width:100%;margin-top:12px}
+.neg{color:var(--wr)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function(){
+var AREAS={rec2:"Recámara 2",rec1:"Recámara 1",bano:"Baño",comedor:"Comedor",sala:"Sala",patio:"Patio de servicio",cocina:"Cocina",acceso:"Acceso / cochera",esc:"Escaleras"};
+var BOX={rec2:[150,295,165,275],rec1:[325,295,275,195],bano:[450,495,155,140],comedor:[140,580,245,200],sala:[140,780,245,270],patio:[455,645,155,160],cocina:[455,810,155,240],acceso:[125,1058,320,500],esc:[465,1062,165,440]};
+var DED=[["Agua",5000],["Luz",5000],["Gas",5000],["Internet",5000],["Comida",5000],["Recarga",10000]];
+var DAY=7800,XMIN=900,XMAX=5400,DEDT=35000,MAXW=60000;
+var S,role=null,tab="plano",sel=null;
+
+function p2(n){return(n<10?"0":"")+n}
+function iso(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())}
+function today(){return iso(new Date())}
+function mon(d){d=new Date(d);d.setDate(d.getDate()-(d.getDay()+6)%7);return iso(d)}
+function addDays(s,n){var d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function m(c){return"$"+(c/100).toFixed(2)}
+function when(t){return new Date(t).toLocaleString("es-MX",{weekday:"short",hour:"2-digit",minute:"2-digit"})}
+function left(x){var ms=x.exp-Date.now();return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
+
+function def(){
+  var D=[["sala","Barrer y trapear la sala"],["comedor","Limpiar mesa y sillas"],["cocina","Lavar trastes y limpiar estufa"],["bano","Tallar inodoro y lavabo"],["rec1","Tender cama y ordenar"],["rec2","Tender cama y ordenar"],["patio","Barrer el patio de servicio"],["acceso","Barrer el acceso"],["esc","Barrer escalones"]];
+  return{pin:"1234",test:false,wk:mon(new Date()),daily:D.map(function(x,i){return{id:"d"+i,area:x[0],name:x[1],c:i===8?872:866}}),extras:[],xp:0,led:[],notes:[],weeks:[]};
+}
+function load(){try{S=JSON.parse(localStorage.getItem("casa")||"null")}catch(e){S=null}if(!S)S=def();dn()}
+function save(){try{localStorage.setItem("casa",JSON.stringify(S))}catch(e){}if(role==="a")pushMain()}
+
+function live(){var n=Date.now(),l=S.extras.filter(function(x){return x.exp>n});if(l.length!==S.extras.length){S.extras=l;save()}return l}
+function dDone(id){return S.led.some(function(l){return l.k==="d"&&l.id===id&&l.d===today()})}
+function eDone(id){return S.led.some(function(l){return l.k==="e"&&l.id===id})}
+function sum(k){return S.led.reduce(function(a,l){return a+(!k||l.k===k?l.c:0)},0)}
+function todayEarn(){var t=today();return S.led.reduce(function(a,l){return a+(iso(new Date(l.t))===t?l.c:0)},0)}
+function canClose(){return S.test||today()>=addDays(S.wk,6)}
+function tasksOf(k){return{d:S.daily.filter(function(x){return x.area===k}),e:live().filter(function(x){return x.area===k})}}
+function pending(k){var T=tasksOf(k);return{n:T.d.length+T.e.length,p:T.d.filter(function(x){return!dDone(x.id)}).length+T.e.filter(function(x){return!eDone(x.id)}).length}}
+function dsum(){return S.daily.reduce(function(a,x){return a+x.c},0)}
+function dn(){S.daily.forEach(function(x){if(typeof x.c!=="number")x.c=Math.round(DAY/S.daily.length)})}
+function note(f,x){var o={id:uid(),t:Date.now(),f:f,x:x};S.notes.push(o);if(DB)DB.ref("notes/"+o.id).set(o)}
+
+function finish(k,x){
+  var td=today(),n=S.daily.length;
+  if(k==="d"){
+    if(dDone(x.id))return;
+    addLed({k:"d",id:x.id,d:td,c:x.c,t:Date.now()});
+  }else{
+    if(eDone(x.id))return;
+    addLed({k:"e",id:x.id,d:td,c:x.c,t:Date.now()});
+  }
+  var T=tasksOf(x.area),all=k==="d"?T.d.every(function(y){return dDone(y.id)}):T.e.every(function(y){return eDone(y.id)});
+  if(all)note("s","✅ El usuario terminó las misiones "+(k==="d"?"diarias":"extra")+" de: "+AREAS[x.area]);
+}
+
+function bar(){
+  var t=sum(),net=Math.max(0,t-DEDT);
+  return '<div class="card"><div class="row"><b>💰 Ganado esta semana</b><span class="money">'+m(t)+' <small>/ $600</small></span></div><div class="bar"><i style="width:'+Math.min(100,t/MAXW*100)+'%"></i></div><div class="meta">Hoy: '+m(todayEarn())+' · Pago neto estimado (−$350): <b>'+m(net)+'</b></div></div>';
+}
+
+function mapHtml(){
+  var r='<div class="map"><img src="plano.jpg" alt="Plano de la casa"><svg viewBox="0 0 900 1600">';
+  for(var k in BOX){
+    var b=BOX[k],s=pending(k),c=s.n===0?"z":s.p===0?"ok":"pd",cx=b[0]+b[2]/2,cy=b[1]+b[3]/2;
+    r+='<rect data-a="room" data-i="'+k+'" class="rm '+c+(sel===k?" sel":"")+'" x="'+b[0]+'" y="'+b[1]+'" width="'+b[2]+'" height="'+b[3]+'" rx="10"/>';
+    if(s.n)r+='<circle class="bc" cx="'+cx+'" cy="'+cy+'" r="42"/><text class="bd" x="'+cx+'" y="'+cy+'">'+(s.p===0?"✔":s.p)+'</text>';
+  }
+  return r+'</svg></div>';
+}
+function task(k,id,name,pay,dn){
+  return '<button class="task'+(dn?" dn":"")+'" '+(role==="a"||dn?"disabled ":"")+'data-a="do" data-k="'+k+'" data-i="'+id+'"><span class="c">'+(dn?"✓":"")+'</span><span>'+esc(name)+'</span><span class="p">+'+pay+'</span></button>';
+}
+function panelHtml(){
+  if(!sel)return '<div class="card empty">Toca un espacio del plano 👆</div>';
+  var T=tasksOf(sel),n=S.daily.length,h='<div class="card"><h2>'+AREAS[sel]+'</h2>';
+  if(!T.d.length&&!T.e.length)h+='<div class="meta">Sin misiones aquí por ahora.</div>';
+  if(T.d.length)h+='<div class="sec">DIARIAS</div>';
+  T.d.forEach(function(x){h+=task("d",x.id,x.name,m(x.c),dDone(x.id))});
+  if(T.e.length)h+='<div class="sec">EXTRAS ⏳ (se borran a las 12 h)</div>';
+  T.e.forEach(function(x){h+=task("e",x.id,x.name+" · "+left(x),m(x.c),eDone(x.id))});
+  return h+'</div>';
+}
+function areaSel(id){var o='';for(var k in AREAS)o+='<option value="'+k+'">'+AREAS[k]+'</option>';return '<select id="'+id+'">'+o+'</select>'}
+
+function diaHtml(){
+  if(role!=="a")return userDia();
+  var n=S.daily.length,h='<div class="card"><h2>Misiones diarias</h2><div class="meta">Se quedan hasta que las quites o cambies. Cada misión tiene su paga y entre todas pueden sumar máximo $78.00 al día. Ahora suman '+m(dsum())+' (te quedan '+m(DAY-dsum())+').</div>';
+  S.daily.forEach(function(x){h+='<div class="li"><span><b>'+AREAS[x.area]+'</b> · '+m(x.c)+'<br>'+esc(x.name)+'</span><span><button class="r" data-a="editD" data-i="'+x.id+'">✏️</button> <button class="r" data-a="delD" data-i="'+x.id+'">🗑</button></span></div>'});
+  return h+'</div><div class="card"><b>Agregar misión diaria</b>'+areaSel("dA")+'<input id="dN" placeholder="Ej. Limpiar ventanas"><input id="dC" type="number" min="0.5" step="0.5" placeholder="Pago en $ (ej. 8)"><button class="b" data-a="addD">Agregar</button></div>';
+}
+function extHtml(){
+  if(role!=="a")return userExt();
+  var h='<div class="card"><h2>Misiones extra</h2><div class="meta">Duran 12 h. Esta semana has publicado '+m(S.xp)+' (mínimo $9.00, máximo $54.00). Disponible: '+m(XMAX-S.xp)+'.</div>';
+  var l=live();if(!l.length)h+='<div class="empty">No hay extras activas</div>';
+  l.forEach(function(x){h+='<div class="li"><span><b>'+AREAS[x.area]+'</b> · '+esc(x.name)+'<br><span class="meta">'+m(x.c)+' · quedan '+left(x)+(eDone(x.id)?' · ✓ hecha':'')+'</span></span><button class="r" data-a="delE" data-i="'+x.id+'">🗑</button></div>'});
+  return h+'</div><div class="card"><b>Nueva misión extra</b>'+areaSel("eA")+'<input id="eN" placeholder="Ej. Lavar el tapete"><input id="eC" type="number" min="1" step="0.5" placeholder="Pago en $ (ej. 6)"><button class="b" data-a="addE">Publicar (12 h)</button></div>';
+}
+function notasHtml(){
+  var h='<div class="card"><h2>Notas</h2>';
+  if(!S.notes.length)h+='<div class="empty">Sin mensajes todavía</div>';
+  S.notes.slice(-60).forEach(function(n){
+    var c=n.f==="s"?"s":n.f==="a"?"a":"u",who=n.f==="s"?"":n.f==="a"?"Admin":"Usuario";
+    h+='<div class="msg '+c+(n.f==="u"?"":"")+'">'+(who?'<small>'+who+' · '+when(n.t)+'</small>':'')+esc(n.x)+(n.f==="s"?'<small>'+when(n.t)+'</small>':'')+'</div>';
+  });
+  return h+'<input id="nT" placeholder="'+(role==="a"?"Escribe un aviso…":"Responder…")+'"><button class="b" data-a="send">Enviar</button></div>';
+}
+function dedHtml(){return DED.map(function(d){return '<div class="li"><span>'+d[0]+'</span><span class="neg">−'+m(d[1])+'</span></div>'}).join("")}
+function userDia(){
+  var n=S.daily.length,h='<div class="card"><h2>Misiones diarias</h2><div class="meta">Hoy puedes ganar hasta $78.00. Cada una paga lo que puso el admin. Se reinician cada día.</div>';
+  if(!n)h+='<div class="empty">El admin aún no pone misiones</div>';
+  Object.keys(AREAS).forEach(function(k){var l=S.daily.filter(function(x){return x.area===k});if(!l.length)return;h+='<div class="sec">'+AREAS[k].toUpperCase()+'</div>';l.forEach(function(x){h+=task("d",x.id,x.name,m(x.c),dDone(x.id))})});
+  return h+'</div>';
+}
+function userExt(){
+  var l=live(),h='<div class="card"><h2>Misiones extra</h2><div class="meta">Duran 12 horas desde que el admin las publica.</div>';
+  if(!l.length)h+='<div class="empty">No hay extras por ahora</div>';
+  l.forEach(function(x){h+=task("e",x.id,AREAS[x.area]+": "+x.name+" · quedan "+left(x),m(x.c),eDone(x.id))});
+  return h+'</div>';
+}
+function semHtml(){return role==="a"?semAdmin():pagosHtml()}
+function semAdmin(){
+  var c=sum(),net=Math.max(0,c-DEDT),wkEnd=addDays(S.wk,6);
+  var h='<div class="card"><h2>Semana '+S.wk+' → '+wkEnd+'</h2><div class="li"><span>Diarias ganadas</span><b>'+m(sum("d"))+'</b></div><div class="li"><span>Extras ganadas</span><b>'+m(sum("e"))+'</b></div><div class="li"><span><b>Total recolectado</b></span><b>'+m(c)+'</b></div>'+dedHtml()+'<div class="li"><span><b>Pago al usuario</b></span><b class="money">'+m(net)+'</b></div>';
+  h+='<div class="meta">Extras publicadas: '+m(S.xp)+' (mínimo $9.00 para cerrar).</div><button class="b" style="width:100%;margin-top:8px" data-a="close" '+(canClose()?"":"disabled")+'>Cerrar semana y pagar</button>';
+  if(!canClose())h+='<div class="meta">Se habilita el domingo '+wkEnd+'.</div>';
+  h+='<div class="meta">Al cerrar se borran las extras y el conteo; renueva las diarias si quieres.</div></div>';
+  h+='<div class="card"><button class="r" data-a="rstDay">Reiniciar misiones de hoy</button> <button class="r" data-a="rstWeek">Reiniciar conteo de la semana</button></div>';
+  return h+histHtml();
+}
+function histHtml(){
+  var h='<div class="card"><h2>Pagos por semana</h2>';
+  if(!S.weeks.length)h+='<div class="empty">Aún no hay semanas pagadas</div>';
+  S.weeks.forEach(function(w){h+='<div class="li"><span>'+w.wk+' → '+addDays(w.wk,6)+'<br><span class="meta">Ganado '+m(w.c)+' − $350.00</span></span><b class="money">'+m(w.net)+'</b></div>'});
+  return h+'</div>';
+}
+function pagosHtml(){
+  var c=sum();
+  return '<div class="card"><h2>Esta semana</h2><div class="li"><span>Recolectado</span><b>'+m(c)+'</b></div>'+dedHtml()+'<div class="li"><span><b>Pago estimado</b></span><b class="money">'+m(Math.max(0,c-DEDT))+'</b></div></div>'+histHtml();
+}
+function ajHtml(){
+  return '<div class="card"><h2>Ajustes</h2><b>PIN de admin</b><input id="pn" type="password" placeholder="Nuevo PIN"><button class="b" data-a="pin">Guardar PIN</button><div class="li"><span>Permitir cerrar semana cualquier día (prueba)</span><input type="checkbox" data-a="test" style="width:auto" '+(S.test?"checked":"")+'></div><button class="r" data-a="wipe">Borrar todos los datos</button></div><div class="card meta">'+(DB?'Conectado a Firebase: mensajes y misiones se sincronizan en tiempo real.':'Modo local: llena firebase-config.js para tener tiempo real entre celulares.')+'</div>';
+}
+function loginHtml(){return '<div class="big"><h1>🧹 Casa limpia</h1><div class="meta">Misiones y pagos semanales</div><button class="b" data-a="u">Entrar como Usuario</button><button class="r" data-a="a">Entrar como Admin</button></div>'}
+
+function render(){
+  var A=document.getElementById("app"),fo=document.activeElement,fid=fo&&fo.id,fv=fo&&fo.value;
+  if(!role){A.innerHTML=loginHtml();return}
+  if(tab==="notas")seen();var ub=unread()?" 🔴"+unread():"";var ad=role==="a",tabs=ad?[["plano","🏠 Plano"],["dia","📋 Diarias"],["ext","⭐ Extras"],["notas","💬 Notas"+ub],["sem","💵 Semana"],["aj","⚙️"]]:[["plano","🏠 Plano"],["dia","📋 Diarias"],["ext","⭐ Extras"],["notas","💬 Notas"+ub],["sem","💵 Semana"]];
+  var h='<header><b>🧹 Casa limpia</b><span>'+(DB?(online?"🟢 En vivo · ":"🔴 Sin conexión · "):"⚪ Local · ")+(ad?"Admin":"Usuario")+' <button class="r" data-a="out">Salir</button></span></header><main>'+bar();
+  if(ad&&today()>=addDays(S.wk,6))h+='<div class="card warn">📅 Ya toca cerrar la semana (domingo) y renovar las misiones.</div>';
+  h+='<nav>'+tabs.map(function(t){return '<button class="'+(tab===t[0]?"on":"")+'" data-a="tab" data-i="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</nav>';
+  if(tab==="plano"){
+    if(view3&&!T3){try{T3=init3()}catch(e){view3=false}}
+    if(window.THREE)h+='<div class="row" style="margin-bottom:6px"><span class="meta">'+(view3?"Arrastra para girar · pellizca para zoom":"Vista plana")+'</span><button class="r" data-a="view">'+(view3?"Ver en 2D":"Ver en 3D")+'</button></div>';
+    h+=(view3?'<div id="m3" class="map"></div>':mapHtml())+panelHtml();
+  }
+  else if(tab==="dia")h+=diaHtml();
+  else if(tab==="ext")h+=extHtml();
+  else if(tab==="notas")h+=notasHtml();
+  else if(tab==="sem")h+=semHtml();
+  else if(tab==="pagos")h+=pagosHtml();
+  else h+=ajHtml();
+  A.innerHTML=h+'</main>';
+  if(tab==='plano'&&view3&&T3&&$('m3')){T3.mount($('m3'));T3.update()}
+  if(fid&&$(fid)&&fv!==undefined){$(fid).value=fv;$(fid).focus()}
+}
+function $(id){return document.getElementById(id)}
+
+var DB=null,online=false,mainLoaded=false,T3=null,view3=!!window.THREE;
+function toArr(v){return v?Object.keys(v).map(function(k){return v[k]}):[]}
+function pushMain(){if(!DB||!mainLoaded)return;DB.ref("main").set({pin:S.pin,test:S.test,wk:S.wk,xp:S.xp,daily:S.daily,extras:S.extras,weeks:S.weeks})}
+function addLed(o){o.i=uid();S.led.push(o);if(DB)DB.ref("led/"+o.i).set(o)}
+function setLed(a){S.led=a;if(DB){var o={};a.forEach(function(l){o[l.i]=l});DB.ref("led").set(a.length?o:null)}}
+function seenT(){try{return+localStorage.getItem("seen"+role)||0}catch(e){return 0}}
+function seen(){try{localStorage.setItem("seen"+role,Date.now())}catch(e){}}
+function unread(){var s=seenT();return S.notes.filter(function(n){return n.t>s&&(n.f==="s"?role==="a":n.f!==role)}).length}
+function initFB(){
+  try{
+    var c=window.FB_CONFIG;if(!window.firebase||!c||!c.databaseURL)return;
+    firebase.initializeApp(c);DB=firebase.database();
+    DB.ref(".info/connected").on("value",function(s){online=!!s.val();render()});
+    DB.ref("main").on("value",function(s){
+      var v=s.val();mainLoaded=true;
+      if(!v){if(role==="a")pushMain();return}
+      S.daily=toArr(v.daily);dn();S.extras=toArr(v.extras);S.weeks=toArr(v.weeks);
+      S.pin=v.pin||S.pin;S.test=!!v.test;S.wk=v.wk||S.wk;S.xp=v.xp||0;
+      try{localStorage.setItem("casa",JSON.stringify(S))}catch(e){}render();
+    });
+    DB.ref("led").on("value",function(s){S.led=toArr(s.val());render()});
+    DB.ref("notes").on("value",function(s){S.notes=toArr(s.val()).sort(function(a,b){return a.t-b.t});render()});
+  }catch(e){DB=null}
+}
+function init3(){
+  var Th=THREE,sc=new Th.Scene(),cam=new Th.PerspectiveCamera(45,1,.1,100),ren=new Th.WebGLRenderer({antialias:true,alpha:true}),el=ren.domElement;
+  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));el.style.cssText="display:block;touch-action:none;width:100%";
+  sc.add(new Th.AmbientLight(0xffffff,.85));var dl=new Th.DirectionalLight(0xffffff,.6);dl.position.set(5,10,7);sc.add(dl);
+  var gr=new Th.Mesh(new Th.PlaneGeometry(9,16),new Th.MeshBasicMaterial({map:new Th.TextureLoader().load("plano.jpg")}));gr.rotation.x=-Math.PI/2;sc.add(gr);
+  var rooms={},az=0,pol=.85,rad=19;
+  Object.keys(BOX).forEach(function(k){
+    var b=BOX[k],me=new Th.Mesh(new Th.BoxGeometry(1,1,1),new Th.MeshLambertMaterial({color:0x888888,transparent:true,opacity:.5}));
+    me.position.set((b[0]+b[2]/2)/100-4.5,0,(b[1]+b[3]/2)/100-8);
+    me.userData={k:k,h:.2,cur:.2};me.scale.set(b[2]/100-.08,.2,b[3]/100-.08);
+    me.add(new Th.LineSegments(new Th.EdgesGeometry(new Th.BoxGeometry(1,1,1)),new Th.LineBasicMaterial({color:0x111111})));
+    var cv=document.createElement("canvas");cv.width=384;cv.height=96;
+    var sp=new Th.Sprite(new Th.SpriteMaterial({map:new Th.CanvasTexture(cv),depthTest:false}));sp.scale.set(2.2,.55,1);
+    sc.add(me);sc.add(sp);rooms[k]={m:me,s:sp,c:cv,t:""};
+  });
+  var ptr={},moved=0,pd=0;
+  function pdist(){var a=Object.keys(ptr).map(function(i){return ptr[i]});return a.length<2?1:Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])||1}
+  el.addEventListener("pointerdown",function(e){try{el.setPointerCapture(e.pointerId)}catch(x){}ptr[e.pointerId]=[e.clientX,e.clientY];moved=0;pd=pdist()});
+  el.addEventListener("pointermove",function(e){
+    var p=ptr[e.pointerId];if(!p)return;var n=Object.keys(ptr).length;
+    if(n===1){var dx=e.clientX-p[0],dy=e.clientY-p[1];moved+=Math.abs(dx)+Math.abs(dy);az-=dx*.008;pol=Math.max(.15,Math.min(1.45,pol-dy*.006))}
+    ptr[e.pointerId]=[e.clientX,e.clientY];
+    if(n===2){var d=pdist();moved+=9;rad=Math.max(8,Math.min(30,rad*pd/d));pd=d}
+  });
+  function up(e){if(ptr[e.pointerId]&&moved<8&&e.type==="pointerup")pick(e);delete ptr[e.pointerId]}
+  el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);
+  el.addEventListener("wheel",function(e){e.preventDefault();rad=Math.max(8,Math.min(30,rad+e.deltaY*.02))},{passive:false});
+  function pick(e){
+    var r=el.getBoundingClientRect(),rc=new Th.Raycaster();
+    rc.setFromCamera(new Th.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),cam);
+    var h=rc.intersectObjects(Object.keys(rooms).map(function(k){return rooms[k].m}))[0];
+    if(h){sel=h.object.userData.k;render()}
+  }
+  function size(d){var w=d.clientWidth||320,h=Math.round(w*1.3);ren.setSize(w,h,false);el.style.height=h+"px";cam.aspect=w/h;cam.updateProjectionMatrix()}
+  (function loop(){
+    requestAnimationFrame(loop);if(!el.isConnected)return;
+    for(var k in rooms){var o=rooms[k],u=o.m.userData;u.cur+=(u.h-u.cur)*.15;o.m.scale.y=u.cur;o.m.position.y=u.cur/2;o.s.position.set(o.m.position.x,u.cur+.4,o.m.position.z)}
+    cam.position.set(rad*Math.sin(pol)*Math.sin(az),rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));cam.lookAt(0,0,0);ren.render(sc,cam);
+  })();
+  window.addEventListener("resize",function(){if(el.isConnected)size(el.parentNode)});
+  return{
+    mount:function(d){d.appendChild(el);size(d)},
+    update:function(){
+      for(var k in rooms){
+        var o=rooms[k],s=pending(k),st=s.n===0?0:s.p===0?2:1,mt=o.m.material;
+        mt.color.setHex([0x888888,0x2f7de1,0x2fa866][st]);mt.opacity=sel===k?.95:[.3,.75,.85][st];
+        o.m.userData.h=sel===k?1.4:[.15,.5,.3][st];
+        var tx=AREAS[k]+(s.n?" · "+(s.p?s.p:"✔"):"");
+        if(tx!==o.t){o.t=tx;var g=o.c.getContext("2d");g.clearRect(0,0,384,96);g.fillStyle="rgba(20,24,34,.88)";g.fillRect(0,18,384,60);g.fillStyle="#fff";g.font="bold 32px sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText(tx,192,48);o.s.material.map.needsUpdate=true}
+      }
+    }
+  };
+}
+
+document.getElementById("app").addEventListener("click",function(e){
+  var t=e.target.closest("[data-a]");if(!t)return;
+  var a=t.dataset.a,i=t.dataset.i;
+  if(a==="u"){role="u";tab="plano"}
+  else if(a==="a"){var p=prompt("PIN de admin");if(p!==S.pin){if(p!==null)alert("PIN incorrecto");return}role="a";tab="plano"}
+  else if(a==="out"){role=null;sel=null}
+  else if(a==="view")view3=!view3;
+  else if(a==="tab")tab=i;
+  else if(a==="room")sel=i;
+  else if(a==="do"){
+    if(role!=="u")return;
+    var x=t.dataset.k==="d"?S.daily.filter(function(y){return y.id===i})[0]:live().filter(function(y){return y.id===i})[0];
+    if(x)finish(t.dataset.k,x);
+  }
+  else if(a==="addD"){
+    var n=$("dN").value.trim(),pc=Math.round(parseFloat($("dC").value)*100);
+    if(!n||!(pc>0))return alert("Escribe el nombre y el pago");
+    if(dsum()+pc>DAY)return alert("Las diarias no pueden sumar más de $78.00. Te quedan "+m(DAY-dsum()));
+    S.daily.push({id:uid(),area:$("dA").value,name:n,c:pc})}
+  else if(a==="delD"){if(!confirm("¿Quitar esta misión diaria?"))return;S.daily=S.daily.filter(function(y){return y.id!==i})}
+  else if(a==="editD"){
+    var o=S.daily.filter(function(y){return y.id===i})[0],v=prompt("Cambiar misión:",o.name);if(v===null)return;
+    var pv=prompt("Pago en $:",(o.c/100).toFixed(2));if(pv===null)return;var nc=Math.round(parseFloat(pv)*100);
+    if(!(nc>0))return alert("Pago no válido");
+    if(dsum()-o.c+nc>DAY)return alert("Las diarias no pueden sumar más de $78.00");
+    if(v.trim())o.name=v.trim();o.c=nc}
+  else if(a==="addE"){
+    var nm=$("eN").value.trim(),c=Math.round(parseFloat($("eC").value)*100);
+    if(!nm||!(c>0))return alert("Escribe nombre y pago");
+    if(S.xp+c>XMAX)return alert("El máximo de extras por semana es $54.00. Te quedan "+m(XMAX-S.xp));
+    S.xp+=c;S.extras.push({id:uid(),area:$("eA").value,name:nm,c:c,exp:Date.now()+12*36e5});
+  }
+  else if(a==="delE"){var q=S.extras.filter(function(y){return y.id===i})[0];if(q&&!eDone(i))S.xp=Math.max(0,S.xp-q.c);S.extras=S.extras.filter(function(y){return y.id!==i})}
+  else if(a==="send"){var tx=$("nT").value.trim();if(!tx)return;note(role==="a"?"a":"u",tx)}
+  else if(a==="rstDay"){if(!confirm("¿Reiniciar las misiones de hoy?"))return;var td=today();setLed(S.led.filter(function(l){return!(l.k==="d"&&l.d===td)}))}
+  else if(a==="rstWeek"){if(!confirm("¿Borrar el conteo de dinero de esta semana?"))return;setLed([]);S.xp=0;S.extras=[]}
+  else if(a==="close"){
+    if(S.xp<XMIN)return alert("Debes publicar al menos $9.00 en misiones extra esta semana (llevas "+m(S.xp)+").");
+    if(!confirm("¿Cerrar y pagar la semana?"))return;
+    var c2=sum(),net=Math.max(0,c2-DEDT);
+    S.weeks.unshift({wk:S.wk,c:c2,net:net,at:Date.now()});
+    note("s","💵 Semana pagada. Ganado "+m(c2)+", descuentos $350.00, pago "+m(net)+". Admin: renueva las misiones.");
+    setLed([]);S.extras=[];S.xp=0;S.wk=addDays(mon(new Date()),7);
+  }
+  else if(a==="pin"){var np=$("pn").value.trim();if(np.length<4)return alert("Mínimo 4 caracteres");S.pin=np;alert("PIN guardado")}
+  else if(a==="test")S.test=t.checked;
+  else if(a==="wipe"){if(!confirm("¿Borrar TODO?"))return;S=def();if(DB){DB.ref("led").remove();DB.ref("notes").remove()}}
+  save();render();
+});
+window.addEventListener("storage",function(){if(!DB){load();render()}});
+setInterval(function(){var f=document.activeElement;if(role&&!(f&&f.tagName==="INPUT"))render()},60000);
+load();initFB();render();
+})();
+</script>
+<script>if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js")})</script>
+</body>
+</html>
